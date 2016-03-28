@@ -15,6 +15,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -25,18 +34,9 @@ import org.junit.experimental.categories.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
-@Category(UnitTest.class)
-public class SubscriptionTest {
-    final Logger logger = LoggerFactory.getLogger(SubscriptionTest.class);
+@Category(IntegrationTest.class)
+public class ITSubscriptionTest {
+    final Logger logger = LoggerFactory.getLogger(ITSubscriptionTest.class);
 
     ExecutorService executor =
             Executors.newCachedThreadPool(new NATSThreadFactory("nats-test-thread"));
