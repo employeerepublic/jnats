@@ -16,16 +16,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
@@ -37,9 +27,19 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import io.nats.client.Constants.ConnState;
 
-@Category(UnitTest.class)
-public class ReconnectTest {
-    final static Logger logger = LoggerFactory.getLogger(ReconnectTest.class);
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@Category(IntegrationTest.class)
+public class ITReconnectTest {
+    final static Logger logger = LoggerFactory.getLogger(ITReconnectTest.class);
 
     @Rule
     public TestCasePrinterRule pr = new TestCasePrinterRule(System.out);

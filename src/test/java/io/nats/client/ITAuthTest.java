@@ -3,6 +3,7 @@
  * materials are made available under the terms of the MIT License (MIT) which accompanies this
  * distribution, and is available at http://opensource.org/licenses/MIT
  *******************************************************************************/
+
 package io.nats.client;
 
 import static io.nats.client.Constants.ERR_AUTHORIZATION;
@@ -12,6 +13,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -20,13 +26,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.io.IOException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
-
-@Category(UnitTest.class)
-public class AuthTest {
+@Category(IntegrationTest.class)
+public class ITAuthTest {
     @Rule
     public TestCasePrinterRule pr = new TestCasePrinterRule(System.out);
 
