@@ -20,14 +20,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -35,6 +27,14 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Category(UnitTest.class)
 public class ProtocolTest {
@@ -72,7 +72,7 @@ public class ProtocolTest {
 
             String s = br.readLine().trim();
 
-            assertEquals("INFO strings not equal.", TCPConnectionMock.defaultInfo.trim(), s);
+            assertEquals("INFO strings not equal.", TestConstants.TEST_INFO_STRING.trim(), s);
 
             bw.write(defaultConnect.getBytes());
         } catch (Exception e1) {
@@ -240,7 +240,7 @@ public class ProtocolTest {
             try (ConnectionImpl c = new ConnectionFactory().createConnection(mock)) {
                 assertTrue(!c.isClosed());
 
-                String expected = TCPConnectionMock.defaultInfo;
+                String expected = TestConstants.TEST_INFO_STRING;
                 ServerInfo info = c.getConnectedServerInfo();
 
                 assertEquals("Wrong server INFO", expected, info);

@@ -11,6 +11,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,14 +27,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 @Category(BenchmarkTest.class)
 public class BenchTest {
@@ -53,12 +53,13 @@ public class BenchTest {
 
     @Test
     public void testPubSpeed() {
-        int count = 120000000;
+        int count = 200000000;
         String url = ConnectionFactory.DEFAULT_URL;
         final String subject = "foo";
         final byte[] payload = null;
         long elapsed = 0L;
 
+        System.out.printf("testPubSpeed: publishing %d messages\n", count);
         try (Connection c = new ConnectionFactory(url).createConnection()) {
             final Message msg = new Message(subject, null, payload);
 
@@ -245,8 +246,8 @@ public class BenchTest {
     }
 
     public static void main(String[] args) {
-        // BenchTest b = new BenchTest();
-        // b.testPubSpeed();
+        BenchTest b = new BenchTest();
+        b.testPubSpeed();
         // b.testManyConnections();
 
     }

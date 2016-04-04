@@ -21,6 +21,8 @@ import static io.nats.client.Constants.ERR_STALE_CONNECTION;
 import static io.nats.client.Constants.ERR_TIMEOUT;
 import static io.nats.client.Constants.TLS_SCHEME;
 
+import io.nats.client.Constants.ConnState;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +57,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import io.nats.client.Constants.ConnState;
-
 class ConnectionImpl implements Connection {
     final Logger logger = LoggerFactory.getLogger(ConnectionImpl.class);
 
@@ -64,7 +64,7 @@ class ConnectionImpl implements Connection {
 
     // final static int DEFAULT_SCRATCH_SIZE = 512;
 
-    private static final String inboxPrefix = "_INBOX.";
+    protected static final String inboxPrefix = "_INBOX.";
 
     public ConnState status = ConnState.DISCONNECTED;
 
@@ -116,7 +116,7 @@ class ConnectionImpl implements Connection {
     // protected final Lock mu = new AlternateDeadlockDetectingLock(true, true);
 
     private AtomicLong sidCounter = new AtomicLong();
-    private URI url = null;
+    protected URI url = null;
     protected Options opts = null;
 
     private TCPConnection conn = null;
@@ -209,7 +209,7 @@ class ConnectionImpl implements Connection {
         setupServerPool();
     }
 
-    private void setup() {
+    protected void setup() {
         subs.clear();
         pongs = new ArrayList<Channel<Boolean>>();
     }
@@ -555,7 +555,7 @@ class ConnectionImpl implements Connection {
     // This will check to see if the connection should be
     // secure. This can be dictated from either end and should
     // only be called after the INIT protocol has been received.
-    private void checkForSecure() throws IOException {
+    protected void checkForSecure() throws IOException {
         // Check to see if we need to engage TLS
         // Check for mismatch in setups
         if (opts.isSecure() && !info.isTlsRequired()) {
@@ -1472,8 +1472,8 @@ class ConnectionImpl implements Connection {
         sub.getLock().lock();
         try {
             if (sub.getChannel() != null) {
-                sub.mch.close();
-                sub.mch = null;
+                sub.getChannel().close();
+                sub.setChannel(null);
                 // logger.trace("Closed sid={} subj={}", sub.getSid(),
                 // sub.getSubject());
             }
@@ -1546,7 +1546,7 @@ class ConnectionImpl implements Connection {
             bw.flush();
         } catch (IOException e) {
             setLastError(e);
-            // logger.error("Could not send PING", e);
+            logger.error("Could not send PING", e);
         }
     }
 
@@ -1648,7 +1648,6 @@ class ConnectionImpl implements Connection {
         }
     }
 
-
     private void setFlusherDone(boolean value) {
         flusherLock.lock();
         try {
@@ -1703,13 +1702,6 @@ class ConnectionImpl implements Connection {
                 logger.debug("flusher loop interrupted", e);
             }
 
-            // try {
-            // if (!mu.tryLock(1, TimeUnit.MILLISECONDS)) {
-            // // System.err.println("FLUSHER CONTINUING");
-            // continue;
-            // }
-            // } catch (InterruptedException e1) {
-            // }
             mu.lock();
             try {
 
@@ -2020,7 +2012,7 @@ class ConnectionImpl implements Connection {
             try {
                 bw.write(pubProtoBuf.array(), 0, pubProtoBuf.position());
                 pubProtoBuf.position(pubPrimBytesLen);
-                logger.trace("=> {}", new String(pubProtoBuf.array()).trim());
+                // logger.trace("=> {}", new String(pubProtoBuf.array()).trim());
 
                 if (msgSize > 0) {
                     bw.write(data, 0, msgSize);
@@ -2120,6 +2112,10 @@ class ConnectionImpl implements Connection {
     public String newInbox() {
         String inbox = String.format("%s%s", inboxPrefix, NUID.nextGlobal());
         return inbox;
+    }
+
+    protected synchronized void setStats(Statistics stats) {
+        this.stats = stats;
     }
 
     @Override
@@ -2274,7 +2270,7 @@ class ConnectionImpl implements Connection {
         return lastEx;
     }
 
-    private void setLastError(Exception err) {
+    protected void setLastError(Exception err) {
         this.lastEx = err;
     }
 
@@ -2308,7 +2304,7 @@ class ConnectionImpl implements Connection {
         }
     }
 
-    void setOutputStream(OutputStream out) {
+    protected void setOutputStream(OutputStream out) {
         mu.lock();
         try {
             this.bw = out;
@@ -2317,7 +2313,7 @@ class ConnectionImpl implements Connection {
         }
     }
 
-    OutputStream getOutputStream() {
+    protected OutputStream getOutputStream() {
         return bw;
     }
 

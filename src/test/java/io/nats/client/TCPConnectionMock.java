@@ -3,11 +3,13 @@
  * materials are made available under the terms of the MIT License (MIT) which accompanies this
  * distribution, and is available at http://opensource.org/licenses/MIT
  *******************************************************************************/
+
 package io.nats.client;
 
 import static io.nats.client.ConnectionImpl.DEFAULT_BUF_SIZE;
 import static io.nats.client.ConnectionImpl.PING_PROTO;
 import static io.nats.client.ConnectionImpl.PONG_PROTO;
+import static io.nats.client.TestConstants.TEST_INFO_STRING;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -44,9 +46,6 @@ class TCPConnectionMock extends TCPConnection implements Runnable, AutoCloseable
 
     volatile boolean shutdown = false;
 
-    public final static String defaultInfo =
-            "INFO {\"server_id\":\"a1c9cf0c66c3ea102c600200d441ad8e\",\"version\":\"0.7.2\",\"go\":\"go1.4.2\",\"host\":\"0.0.0.0\",\"port\":4222,\"auth_required\":false,\"ssl_required\":false,\"tls_required\":false,\"tls_verify\":false,\"max_payload\":1048576}\r\n";
-
     ReentrantLock mu = new ReentrantLock();
     Socket client = null;
     char[] buffer = new char[ConnectionImpl.DEFAULT_BUF_SIZE];
@@ -79,7 +78,7 @@ class TCPConnectionMock extends TCPConnection implements Runnable, AutoCloseable
     private BufferedInputStream bis = null;
     private BufferedOutputStream bos = null;
 
-    ServerInfo serverInfo = new ServerInfo(defaultInfo);
+    ServerInfo serverInfo = new ServerInfo(TEST_INFO_STRING);
     ClientConnectInfo connectInfo;
 
     private boolean sendNullPong;
@@ -288,8 +287,8 @@ class TCPConnectionMock extends TCPConnection implements Runnable, AutoCloseable
         try {
             if (!noInfo) {
                 if (tlsRequired) {
-                    String s =
-                            defaultInfo.replace("\"tls_required\":false", "\"tls_required\":true");
+                    String s = TEST_INFO_STRING.replace("\"tls_required\":false",
+                            "\"tls_required\":true");
                     serverInfo = new ServerInfo(s);
                 }
                 bw.write(serverInfo.toString().getBytes());

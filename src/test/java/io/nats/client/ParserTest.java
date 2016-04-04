@@ -12,11 +12,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.text.ParseException;
-import java.util.concurrent.TimeoutException;
-
 import io.nats.client.ConnectionImpl.Control;
 import io.nats.client.Parser.NatsOp;
 
@@ -27,6 +22,11 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.text.ParseException;
+import java.util.concurrent.TimeoutException;
 
 @Category(UnitTest.class)
 public class ParserTest {
@@ -474,5 +474,47 @@ public class ParserTest {
             } // Connection
         } // mockServer
     } // testParserSplitMsg
+
+    @Test
+    public void testProcessMsgArgsErrors() {
+        String tooFewArgsString = "foo bar";
+        byte[] args = tooFewArgsString.getBytes();
+
+        boolean exThrown = false;
+        try (TCPConnectionMock mock = new TCPConnectionMock()) {
+            try (ConnectionImpl c = new ConnectionFactory().createConnection(mock)) {
+                c.parser.processMsgArgs(args, 0, args.length);
+            } catch (ParseException e) {
+                exThrown = true;
+                String msg = String.format("Wrong msg: [%s]\n", e.getMessage());
+                assertTrue(msg,
+                        e.getMessage().startsWith("nats: processMsgArgs bad number of args"));
+            } finally {
+                assertTrue("Should have thrown ParseException", exThrown);
+            }
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        String badSizeString = "foo 1 -1";
+        args = badSizeString.getBytes();
+
+        exThrown = false;
+        try (TCPConnectionMock mock = new TCPConnectionMock()) {
+            try (ConnectionImpl c = new ConnectionFactory().createConnection(mock)) {
+                c.parser.processMsgArgs(args, 0, args.length);
+            } catch (ParseException e) {
+                exThrown = true;
+                String msg = String.format("Wrong msg: [%s]\n", e.getMessage());
+                assertTrue(msg,
+                        e.getMessage().startsWith("nats: processMsgArgs bad or missing size: "));
+            } finally {
+                assertTrue("Should have thrown ParseException", exThrown);
+            }
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+    }
+
+
 }
 
