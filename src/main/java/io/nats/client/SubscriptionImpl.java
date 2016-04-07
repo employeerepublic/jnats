@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -47,6 +48,8 @@ abstract class SubscriptionImpl implements Subscription {
 
     ConnectionImpl conn = null;
     Channel<Message> mch;
+
+    LinkedList<Message> pList = new LinkedList<Message>();
 
     // Pending stats, async subscriptions, high-speed etc.
     int pMsgs;
@@ -103,8 +106,6 @@ abstract class SubscriptionImpl implements Subscription {
     public boolean tallyMessage(long length) {
         mu.lock();
         try {
-            // logger.trace("getMax()={}, msgs={}",
-            // max, msgs);
             if (max > 0 && msgs > max) {
                 return true;
             }
@@ -142,43 +143,43 @@ abstract class SubscriptionImpl implements Subscription {
     // returns false if the message could not be added because
     // the channel is full, true if the message was added
     // to the channel.
-    boolean addMessage(Message m) {
-        // logger.trace("Entered addMessage({}, count={} max={}",
-        // m,
-        // mch.getCount(),
-        // max);
-        // Subscription internal stats
-        pMsgs++;
-        if (pMsgs > pMsgsMax) {
-            pMsgsMax = pMsgs;
-        }
-        if (m.getData() != null) {
-            pBytes += m.getData().length;
-        }
-        if (pBytes > pBytesMax) {
-            pBytesMax = pBytes;
-        }
-
-        // Check for a Slow Consumer
-        if (pMsgs > pMsgsLimit || pBytes > pBytesLimit) {
-            handleSlowConsumer(m);
-            return false;
-        }
-
-        if (mch != null) {
-            if (mch.getCount() >= getMaxPendingMsgs()) {
-                handleSlowConsumer(m);
-                // logger.trace("MAXIMUM COUNT ({}) REACHED FOR SID: {}",
-                // max, getSid());
-                return false;
-            } else {
-                sc = false;
-                mch.add(m);
-                // logger.trace("Added message to channel: " + m);
-            }
-        } // mch != null
-        return true;
-    }
+    // boolean addMessage(Message m) {
+    // // logger.trace("Entered addMessage({}, count={} max={}",
+    // // m,
+    // // mch.getCount(),
+    // // max);
+    // // Subscription internal stats
+    // pMsgs++;
+    // if (pMsgs > pMsgsMax) {
+    // pMsgsMax = pMsgs;
+    // }
+    // if (m.getData() != null) {
+    // pBytes += m.getData().length;
+    // }
+    // if (pBytes > pBytesMax) {
+    // pBytesMax = pBytes;
+    // }
+    //
+    // // Check for a Slow Consumer
+    // if (pMsgs > pMsgsLimit || pBytes > pBytesLimit) {
+    // handleSlowConsumer(m);
+    // return false;
+    // }
+    //
+    // if (mch != null) {
+    // if (mch.getCount() >= getMaxPendingMsgs()) {
+    // handleSlowConsumer(m);
+    // // logger.trace("MAXIMUM COUNT ({}) REACHED FOR SID: {}",
+    // // max, getSid());
+    // return false;
+    // } else {
+    // sc = false;
+    // mch.add(m);
+    // // logger.trace("Added message to channel: " + m);
+    // }
+    // } // mch != null
+    // return true;
+    // }
 
     public boolean isValid() {
         mu.lock();
