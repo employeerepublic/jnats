@@ -1385,42 +1385,42 @@ class ConnectionImpl implements Connection {
     // deliverMsgs waits on the delivery channel shared with readLoop and processMsg.
     // It is used to deliver messages to asynchronous subscribers.
     // This function is the run() method of the AsyncSubscription's msgFeeder thread.
-    protected void deliverMsgs(Channel<Message> ch) {
-        // logger.trace("In deliverMsgs");
-        Message msg = null;
-
-        mu.lock();
-        try {
-            // Slightly faster to do this directly vs call isClosed
-            if (_isClosed()) {
-                return;
-            }
-        } finally {
-            mu.unlock();
-        }
-
-        while (true) {
-            // logger.trace("Calling ch.get()...");
-            msg = ch.get();
-            // logger.trace("ch.get() returned " + m);
-
-            if (msg == null) {
-                // the channel has been closed, exit silently.
-                return;
-            }
-
-            // Note, this seems odd message having the sub process itself,
-            // but this is good for performance.
-            if (!msg.sub.processMsg(msg)) {
-                mu.lock();
-                try {
-                    removeSub(msg.sub);
-                } finally {
-                    mu.unlock();
-                }
-            }
-        }
-    }
+    // protected void deliverMsgs(Channel<Message> ch) {
+    // // logger.trace("In deliverMsgs");
+    // Message msg = null;
+    //
+    // mu.lock();
+    // try {
+    // // Slightly faster to do this directly vs call isClosed
+    // if (_isClosed()) {
+    // return;
+    // }
+    // } finally {
+    // mu.unlock();
+    // }
+    //
+    // while (true) {
+    // // logger.trace("Calling ch.get()...");
+    // msg = ch.get();
+    // // logger.trace("ch.get() returned " + m);
+    //
+    // if (msg == null) {
+    // // the channel has been closed, exit silently.
+    // return;
+    // }
+    //
+    // // Note, this seems odd message having the sub process itself,
+    // // but this is good for performance.
+    // if (!msg.sub.processMsg(msg)) {
+    // mu.lock();
+    // try {
+    // removeSub(msg.sub);
+    // } finally {
+    // mu.unlock();
+    // }
+    // }
+    // }
+    // }
 
     // processMsg is called by parse and will place the msg on the
     // appropriate channel for processing. All subscribers have their
@@ -1431,11 +1431,12 @@ class ConnectionImpl implements Connection {
         // data);
         // logger.trace("msg = [{}]", new String(data));
 
-        boolean maxReached = false;
+        boolean slowConsumer = false;
         SubscriptionImpl sub;
 
         mu.lock();
         try {
+            // Stats
             stats.incrementInMsgs();
             stats.incrementInBytes(parser.ps.ma.size);
 
@@ -1444,24 +1445,64 @@ class ConnectionImpl implements Connection {
                 return;
             }
 
+            // Doing message create outside of the sub's lock to reduce contention.
+            // It's possible that we end-up not using the message, but that's ok.
+
+            final Message msg = new Message(ps.ma, sub, data, offset, length);
+
             sub.mu.lock();
             try {
-                maxReached = sub.tallyMessage(ps.ma.size);
-                if (!maxReached) {
-                    Message msg = new Message(ps.ma, sub, data, offset, length);
+                // Subscription internal stats
+                sub.pMsgs++;
+                if (sub.pMsgs > sub.pMsgsMax) {
+                    sub.pMsgsMax = sub.pMsgs;
+                }
+                sub.pBytes += msg.getData().length;
 
-                    sub.addMessage(msg);
-                } // maxreached == false
+                if (sub.pBytes > sub.pBytesMax) {
+                    sub.pBytesMax = sub.pBytes;
+                }
+
+                // Check for a Slow Consumer
+                if (sub.pMsgs > sub.pMsgsLimit || sub.pBytes > sub.pBytesLimit) {
+                    slowConsumer = true;
+                    return; // will trigger 'finally'
+                }
+
+                // We have two modes of delivery. One is the channel, used by
+                // syncSubscribers, the other is a linked list for async.
+                Channel<Message> ch = sub.getChannel();
+                if (ch != null) {
+                    if (!ch.add(msg)) {
+                        slowConsumer = true;
+                        return; // will trigger finally block below
+                    }
+                } else {
+                    // push onto the async pList
+                    sub.pList.add(msg);
+                }
+
+                // try {
+                // maxReached = sub.tallyMessage(ps.ma.size);
+                // if (!maxReached) {
+                //
+                // sub.addMessage(msg);
+                // } // maxreached == false
+
             } // lock s.mu
             finally {
+                if (slowConsumer) {
+                    sub.dropped++;
+                    nc.processSlowConsumer(sub);
+                    // Undo stats from above
+                    sub.pMsgs--;
+                    sub.pBytes -= msg.getData().length;
+                }
                 sub.mu.unlock();
             }
         } // lock conn.mu
         finally {
             mu.unlock();
-        }
-        if (maxReached) {
-            removeSub(sub);
         }
     }
 

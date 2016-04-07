@@ -79,6 +79,63 @@ class AsyncSubscriptionImpl extends SubscriptionImpl implements AsyncSubscriptio
         return (executor != null);
     }
 
+    protected void waitForMsgs() {
+        boolean closed;
+        long delivered = -1L;
+        long max;
+        MessageHandler mcb;
+        Message msg;
+
+        while (true) {
+            mu.lock();
+            try {
+                if (pList.isEmpty() && !this.closed) {
+                    // wait
+
+                }
+
+                // Pop the msg off the list
+                msg = pList.removeFirst();
+                if (msg != null) {
+                    pMsgs--;
+                    if (msg.getData() != null) {
+                        pBytes -= msg.getData().length;
+                    }
+                }
+
+                mcb = this.msgHandler;
+                max = this.max;
+                closed = this.closed;
+
+                if (!this.closed) {
+                    delivered = this.delivered.incrementAndGet();
+                }
+            } finally {
+                mu.unlock();
+            }
+
+            if (closed) {
+                break;
+            }
+
+            // Deliver the message.
+            if (msg != null && (max <= 0 || delivered <= max)) {
+                mcb.onMessage(msg);
+            }
+
+            // If we have hit the max for delivered msgs, remove sub.
+            if (max > 0 && delivered >= max) {
+                conn.mu.lock();
+                try {
+                    conn.removeSub(this);
+                } finally {
+                    conn.mu.unlock();
+                }
+                break;
+            }
+        }
+    }
+
 
     void enable() {
         Runnable msgFeeder = new Runnable() {
@@ -91,7 +148,7 @@ class AsyncSubscriptionImpl extends SubscriptionImpl implements AsyncSubscriptio
                     }
                     logger.trace("msgFeeder entering delivery loop for subj: {} sid: {}", subject,
                             sid);
-                    conn.deliverMsgs(mch);
+                    waitForMsgs();
                 } catch (Exception e) {
                     logger.error("Error on async subscription for subject {}",
                             AsyncSubscriptionImpl.this.getSubject());
