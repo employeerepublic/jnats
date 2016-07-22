@@ -489,6 +489,7 @@ class ConnectionImpl implements Connection {
                 // Mark connection closed in subscription
                 sub.connClosed = true;
                 sub.mu.unlock();
+                System.err.println("Closed sub: " + key);
             }
             subs.clear();
 

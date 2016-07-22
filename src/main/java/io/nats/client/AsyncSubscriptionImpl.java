@@ -11,6 +11,7 @@ package io.nats.client;
 
 import static io.nats.client.Constants.ERR_BAD_SUBSCRIPTION;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -140,9 +141,10 @@ class AsyncSubscriptionImpl extends SubscriptionImpl implements AsyncSubscriptio
         super.close();
         disable();
     }
-    
+
     @Override
     public void unsubscribe() throws IOException {
+        System.err.println("In unsubscribe override");
         super.unsubscribe();
         disable();
     }
