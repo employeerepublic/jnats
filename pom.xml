@@ -11,7 +11,7 @@
         <relativePath />
     </parent>
 
-    <groupId>io.nats</groupId>
+    <groupId>employeerepublic</groupId>
     <artifactId>jnats</artifactId>
     <version>1.1-SNAPSHOT</version>
     <packaging>bundle</packaging>
