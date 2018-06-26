@@ -11,6 +11,13 @@ A [Java](http://www.java.com) client for the [NATS messaging system](https://nat
 [![Dependency Status](https://www.versioneye.com/user/projects/57c07fac968d640039516937/badge.svg?style=flat-square)](https://www.versioneye.com/user/projects/57c07fac968d640039516937)
 [![Reference Status](https://www.versioneye.com/java/io.nats:jnats/reference_badge.svg?style=flat-square)](https://www.versioneye.com/java/io.nats:jnats/references)
 
+## deploy private artefact to clojars
+
+```
+mvn install
+lein deploy clojars employeerepublic/jnats 1.1.0-TESTREL-20180625-2 target/jnats-1.1.0-TESTREL-20180625-2.jar pom.xml
+```
+
 ## Installation
 
 ### Maven Central
@@ -21,7 +28,7 @@ Current stable release (click for pom info): [![Maven Central](https://maven-bad
 
 #### Snapshots
 
-Snapshot releases from the current `master` branch are uploaded to Sonatype OSSRH (OSS Repository Hosting) with each successful Travis CI build. 
+Snapshot releases from the current `master` branch are uploaded to Sonatype OSSRH (OSS Repository Hosting) with each successful Travis CI build.
 If you don't already have your pom.xml configured for using Maven snapshots, you'll need to add the following repository to your pom.xml:
 
 ```xml
@@ -103,40 +110,40 @@ nc.close();
 ## TLS
 
 TLS/SSL connections may be configured through the use of an [SSLContext](https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html).
- 
+
 ```java
-	// Set up and load the keystore
-	final KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-	final char[] keyPassPhrase = "password".toCharArray();
-	final KeyStore ks = KeyStore.getInstance("JKS");
-	ks.load(classLoader.getResourceAsStream("keystore.jks"), keyPassPhrase);
-	kmf.init(ks, keyPassPhrase);
+    // Set up and load the keystore
+    final KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
+    final char[] keyPassPhrase = "password".toCharArray();
+    final KeyStore ks = KeyStore.getInstance("JKS");
+    ks.load(classLoader.getResourceAsStream("keystore.jks"), keyPassPhrase);
+    kmf.init(ks, keyPassPhrase);
 
-	// Set up and load the trust store
-	final char[] trustPassPhrase = "password".toCharArray();
-	final KeyStore tks = KeyStore.getInstance("JKS");
-	tks.load(classLoader.getResourceAsStream("cacerts"), trustPassPhrase);
-	final TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-	tmf.init(tks);
+    // Set up and load the trust store
+    final char[] trustPassPhrase = "password".toCharArray();
+    final KeyStore tks = KeyStore.getInstance("JKS");
+    tks.load(classLoader.getResourceAsStream("cacerts"), trustPassPhrase);
+    final TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
+    tmf.init(tks);
 
-	// Get and initialize the SSLContext
-	SSLContext c = SSLContext.getInstance(Constants.DEFAULT_SSL_PROTOCOL);
-	c.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+    // Get and initialize the SSLContext
+    SSLContext c = SSLContext.getInstance(Constants.DEFAULT_SSL_PROTOCOL);
+    c.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
-	// Create NATS options
-	Options opts = new Options.Builder()
-		.secure()       // Set the secure option, indicating that TLS is required
-		.tlsDebug()     // Set TLS debug, which will produce additional console output
-		.sslContext(c)  // Set the context for this factory
-		.build();
+    // Create NATS options
+    Options opts = new Options.Builder()
+        .secure()       // Set the secure option, indicating that TLS is required
+        .tlsDebug()     // Set TLS debug, which will produce additional console output
+        .sslContext(c)  // Set the context for this factory
+        .build();
 
-	// Create a new SSL connection
-	try (Connection connection = Nats.connect("nats://localhost:1222", opts)) {
-		connection.publish("foo", "Hello".getBytes());
-		connection.close();
-	} catch (Exception e) {
-		e.printStackTrace();
-	}
+    // Create a new SSL connection
+    try (Connection connection = Nats.connect("nats://localhost:1222", opts)) {
+        connection.publish("foo", "Hello".getBytes());
+        connection.close();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
 ```
 
 ## Wildcard Subscriptions
@@ -216,9 +223,9 @@ nc2.publish("foo", "Hello World!");
 ```java
 
 String[] servers = new String[] {
-	"nats://localhost:1222",
-	"nats://localhost:1223",
-	"nats://localhost:1224",
+    "nats://localhost:1222",
+    "nats://localhost:1223",
+    "nats://localhost:1224",
 };
 
 // Setup options to include all servers in the cluster
